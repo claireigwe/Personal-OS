@@ -30,7 +30,8 @@ export async function GET(req: NextRequest) {
         "Cache-Control": "public, max-age=86400, s-maxage=86400"
       }
     });
-  } catch (err: any) {
-    return new Response(err?.message ?? "Error fetching audio", { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Error fetching audio";
+    return new Response(message, { status: 500 });
   }
 }

@@ -50,7 +50,6 @@ export function ActivityHeatmap({ activities, days = 91 }: ActivityHeatmapProps)
   const { weeks, totalActivities, activeDaysCount } = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const todayKey = toLocalDateKey(today);
 
     const weekList: Array<Array<{ dateStr: string; dateObj: Date; count: number; details?: string }>> = [];
     let currentWeek: Array<{ dateStr: string; dateObj: Date; count: number; details?: string }> = [];

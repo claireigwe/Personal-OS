@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Volume2, VolumeX } from "lucide-react";
+import { Volume2 } from "lucide-react";
 import { speakDutch } from "@/lib/speech";
 import { cn } from "@/lib/utils";
 

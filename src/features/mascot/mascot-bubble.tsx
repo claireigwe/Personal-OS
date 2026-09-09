@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Sparkles, MessageCircle, Volume2 } from "lucide-react";
+import { Volume2 } from "lucide-react";
 import { speakDutch } from "@/lib/speech";
 import { cn } from "@/lib/utils";
 

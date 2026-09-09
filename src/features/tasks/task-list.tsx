@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, Pencil, Trash2, X, CheckCheck, AlertCircle } from "lucide-react";
+import { Check, Pencil, Trash2, X, AlertCircle } from "lucide-react";
 import { toggleTaskAction, updateTaskAction, deleteTaskAction } from "@/features/tasks/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

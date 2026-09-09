@@ -14,14 +14,26 @@ import { Button } from "@/components/ui/button";
 import { MascotBubble } from "@/features/mascot/mascot-bubble";
 import { FlashcardReview, type FlashcardItem } from "@/features/learning/flashcard-review";
 
-function extractFlashcards(path: any): FlashcardItem[] {
+type PathData = {
+  modules?: Array<{
+    title?: string;
+    lessons?: Array<{
+      examples?: unknown;
+      content?: unknown;
+    }>;
+  }>;
+} | null;
+
+function extractFlashcards(path: PathData): FlashcardItem[] {
   if (!path?.modules) return [];
   const cards: FlashcardItem[] = [];
 
   for (const mod of path.modules) {
+    if (!mod?.lessons) continue;
     for (const lesson of mod.lessons) {
       if (Array.isArray(lesson.examples)) {
-        for (const ex of lesson.examples) {
+        for (const item of lesson.examples) {
+          const ex = item as { dutch?: string; meaning?: string; guide?: string };
           if (ex?.dutch && ex?.meaning) {
             cards.push({
               id: `fc-${cards.length + 1}`,
@@ -33,16 +45,18 @@ function extractFlashcards(path: any): FlashcardItem[] {
           }
         }
       }
-      if (lesson.content?.groups && Array.isArray(lesson.content.groups)) {
-        for (const g of lesson.content.groups) {
+      const lessonContent = lesson.content as { groups?: Array<{ label?: string; items?: unknown[] }> } | null;
+      if (lessonContent?.groups && Array.isArray(lessonContent.groups)) {
+        for (const g of lessonContent.groups) {
           if (Array.isArray(g.items)) {
             for (const item of g.items) {
-              if (item?.dutch && item?.meaning) {
+              const ex = item as { dutch?: string; meaning?: string; guide?: string };
+              if (ex?.dutch && ex?.meaning) {
                 cards.push({
                   id: `fc-${cards.length + 1}`,
-                  dutch: item.dutch,
-                  meaning: item.meaning,
-                  guide: item.guide,
+                  dutch: ex.dutch,
+                  meaning: ex.meaning,
+                  guide: ex.guide,
                   category: g.label || mod.title
                 });
               }

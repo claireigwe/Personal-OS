@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Sparkles, RotateCw, Check, X, Volume2, ArrowRight, Layers, RefreshCw } from "lucide-react";
+import { Sparkles, RotateCw, Check, X, Layers, RefreshCw } from "lucide-react";
 import { SpeakButton } from "@/components/ui/speak-button";
 import { Button } from "@/components/ui/button";
 import { Portal } from "@/components/ui/portal";

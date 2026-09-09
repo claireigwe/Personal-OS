@@ -1,6 +1,6 @@
 "use client";
 
-import { Award, Lock, Sparkles, Check } from "lucide-react";
+import { Lock, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type BadgeDefinition = {
