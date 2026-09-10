@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { formatDateInputValue } from "@/lib/utils";
 
 export function TaskForm() {
   const [error, setError] = useState("");
@@ -39,10 +40,28 @@ export function TaskForm() {
         <Label htmlFor="description">Description</Label>
         <Textarea id="description" name="description" placeholder="Optional details" />
       </div>
-      <label className="flex items-center gap-3 rounded-xl border-2 border-border/50 bg-card p-4 text-sm font-semibold transition-all hover:border-border cursor-pointer">
-        <input className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary accent-primary" name="dailyRecurring" type="checkbox" />
-        Daily recurring
-      </label>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid gap-1.5">
+          <Label htmlFor="activeDate" className="text-xs font-semibold">Scheduled Date</Label>
+          <Input
+            id="activeDate"
+            name="activeDate"
+            type="date"
+            defaultValue={formatDateInputValue(new Date())}
+            className="h-10 text-sm"
+          />
+        </div>
+        <div className="flex items-end">
+          <label className="flex h-10 w-full items-center gap-2.5 rounded-xl border-2 border-border/50 bg-card px-3 text-xs font-semibold transition-all hover:border-border cursor-pointer">
+            <input
+              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary accent-primary"
+              name="dailyRecurring"
+              type="checkbox"
+            />
+            <span>Daily recurring routine</span>
+          </label>
+        </div>
+      </div>
       <Button>
         <Plus aria-hidden="true" className="h-4 w-4" />
         Add task

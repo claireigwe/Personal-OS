@@ -33,13 +33,26 @@ export async function resetRecurringTasks(userId: string) {
   );
 }
 
+function parseDateInput(dateStr?: string | null): Date {
+  if (!dateStr) return startOfToday();
+  const parts = dateStr.split("-").map(Number);
+  if (parts.length === 3 && !parts.some(isNaN)) {
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+  }
+  return startOfToday();
+}
+
 export async function createTaskAction(formData: FormData) {
   const userId = await requireUserId();
+  const rawDate = formData.get("activeDate")?.toString();
   const parsed = taskSchema.parse({
     title: formData.get("title"),
     description: formData.get("description") || undefined,
-    dailyRecurring: formData.get("dailyRecurring") === "on"
+    dailyRecurring: formData.get("dailyRecurring") === "on",
+    activeDate: rawDate || undefined
   });
+
+  const activeDate = rawDate ? parseDateInput(rawDate) : startOfToday();
 
   await prisma.task.create({
     data: {
@@ -47,7 +60,7 @@ export async function createTaskAction(formData: FormData) {
       title: parsed.title,
       description: parsed.description,
       dailyRecurring: parsed.dailyRecurring,
-      activeDate: startOfToday()
+      activeDate
     }
   });
 
@@ -85,18 +98,23 @@ export async function updateTaskAction(taskId: string, formData: FormData) {
   });
   if (!existingTask) throw new Error("Task not found");
 
+  const rawDate = formData.get("activeDate")?.toString();
   const parsed = taskSchema.parse({
     title: formData.get("title"),
     description: formData.get("description") || undefined,
-    dailyRecurring: formData.get("dailyRecurring") === "on" || formData.get("dailyRecurring") === "true"
+    dailyRecurring: formData.get("dailyRecurring") === "on" || formData.get("dailyRecurring") === "true",
+    activeDate: rawDate || undefined
   });
+
+  const activeDate = rawDate ? parseDateInput(rawDate) : existingTask.activeDate;
 
   await prisma.task.update({
     where: { id: taskId },
     data: {
       title: parsed.title,
       description: parsed.description,
-      dailyRecurring: parsed.dailyRecurring
+      dailyRecurring: parsed.dailyRecurring,
+      activeDate
     }
   });
 

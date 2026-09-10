@@ -77,15 +77,27 @@ export default async function HomePage() {
   await resetRecurringTasks(userId);
 
   const today = startOfToday();
-  const [tasks, reflection, streak, path] = await Promise.all([
-    prisma.task.findMany({ where: { userId, activeDate: today }, orderBy: [{ status: "asc" }, { createdAt: "desc" }] }),
+  const [pendingTasks, completedToday, reflection, streak, path] = await Promise.all([
+    prisma.task.findMany({
+      where: { userId, status: "PENDING" },
+      orderBy: [{ activeDate: "asc" }, { createdAt: "desc" }]
+    }),
+    prisma.task.findMany({
+      where: {
+        userId,
+        status: "COMPLETED",
+        completedAt: { gte: today }
+      },
+      orderBy: { completedAt: "desc" }
+    }),
     prisma.reflection.findUnique({ where: { userId_entryDate: { userId, entryDate: today } } }),
     prisma.streak.upsert({ where: { userId }, update: {}, create: { userId } }),
     getDutchLearningPath(userId)
   ]);
 
-  const completedTasks = tasks.filter((task) => task.status === "COMPLETED").length;
-  const remainingTasks = tasks.length - completedTasks;
+  const completedTasks = completedToday.length;
+  const remainingTasks = pendingTasks.length;
+  const displayTasks = [...pendingTasks, ...completedToday];
   const learning = summarizeLearning(path);
   const flashcards = extractFlashcards(path);
 
@@ -162,15 +174,20 @@ export default async function HomePage() {
         </CardContent>
       </Card>
 
-      {/* Today's Tasks */}
+      {/* Today's Tasks Focus */}
       <Card className="animate-slide-up" style={{ animationDelay: "0.15s" }}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <span>📋</span> Today&apos;s Tasks
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <span>📋</span> Tasks Focus
+            </CardTitle>
+            <Button asChild variant="ghost" size="sm" className="h-8 text-xs font-bold text-primary">
+              <Link href="/tasks">View all ({remainingTasks})</Link>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          <TaskList compact tasks={tasks.slice(0, 5)} />
+          <TaskList compact tasks={displayTasks.slice(0, 5)} />
         </CardContent>
       </Card>
 

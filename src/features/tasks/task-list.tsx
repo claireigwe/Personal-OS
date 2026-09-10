@@ -1,20 +1,22 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, Pencil, Trash2, X, AlertCircle } from "lucide-react";
+import { Check, Pencil, Trash2, X, AlertCircle, RotateCw, Calendar, Clock } from "lucide-react";
 import { toggleTaskAction, updateTaskAction, deleteTaskAction } from "@/features/tasks/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
+import { cn, startOfToday, formatDateInputValue, formatTaskDate } from "@/lib/utils";
 
-type TaskItemData = {
+export type TaskItemData = {
   id: string;
   title: string;
   description: string | null;
   status: "PENDING" | "COMPLETED";
   dailyRecurring: boolean;
+  activeDate?: string | Date;
+  completedAt?: string | Date | null;
 };
 
 type TaskListProps = {
@@ -29,6 +31,9 @@ function TaskItem({ task, compact }: { task: TaskItemData; compact?: boolean }) 
   const [isPending, startTransition] = useTransition();
 
   const completed = task.status === "COMPLETED";
+  const isPendingTask = task.status === "PENDING";
+  const isRolledOver = isPendingTask && task.activeDate && new Date(task.activeDate) < startOfToday();
+  const isUpcoming = isPendingTask && task.activeDate && new Date(task.activeDate) > startOfToday();
 
   const handleUpdate = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -97,15 +102,29 @@ function TaskItem({ task, compact }: { task: TaskItemData; compact?: boolean }) 
             />
           </div>
 
-          <label className="flex items-center gap-2.5 rounded-lg border border-border/50 bg-secondary/20 p-2.5 text-xs font-medium cursor-pointer">
-            <input
-              type="checkbox"
-              name="dailyRecurring"
-              defaultChecked={task.dailyRecurring}
-              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary accent-primary"
-            />
-            Daily recurring routine
-          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="grid gap-1">
+              <Label htmlFor={`edit-date-${task.id}`} className="text-xs">Date</Label>
+              <Input
+                id={`edit-date-${task.id}`}
+                name="activeDate"
+                type="date"
+                defaultValue={task.activeDate ? formatDateInputValue(task.activeDate) : formatDateInputValue(new Date())}
+                className="h-9 text-xs"
+              />
+            </div>
+            <div className="flex items-end">
+              <label className="flex h-9 w-full items-center gap-2 rounded-lg border border-border/50 bg-secondary/20 px-2.5 text-xs font-medium cursor-pointer hover:border-border transition-colors">
+                <input
+                  type="checkbox"
+                  name="dailyRecurring"
+                  defaultChecked={task.dailyRecurring}
+                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary accent-primary"
+                />
+                <span>Daily recurring routine</span>
+              </label>
+            </div>
+          </div>
 
           <div className="flex items-center justify-end gap-2 pt-1">
             <Button
@@ -189,11 +208,26 @@ function TaskItem({ task, compact }: { task: TaskItemData; compact?: boolean }) 
         {!compact && task.description ? (
           <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{task.description}</p>
         ) : null}
-        {task.dailyRecurring ? (
-          <span className="mt-1 inline-block text-[10px] font-bold uppercase tracking-wider text-primary">
-            Daily
-          </span>
-        ) : null}
+        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+          {task.dailyRecurring && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+              <RotateCw className="h-2.5 w-2.5" />
+              Daily
+            </span>
+          )}
+          {isRolledOver && task.activeDate && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+              <Clock className="h-2.5 w-2.5" />
+              Rolled over ({formatTaskDate(task.activeDate)})
+            </span>
+          )}
+          {isUpcoming && task.activeDate && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-600 dark:text-blue-400">
+              <Calendar className="h-2.5 w-2.5" />
+              {formatTaskDate(task.activeDate)}
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center gap-1 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
