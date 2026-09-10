@@ -84,11 +84,16 @@ export async function toggleTaskAction(taskId: string, completed: boolean) {
   });
 
   if (task.status === "COMPLETED") {
-    await recordDailyActivity(userId, task.completedAt ?? new Date());
+    try {
+      await recordDailyActivity(userId, task.completedAt ?? new Date());
+    } catch (err) {
+      console.error("Streak logging skipped:", err);
+    }
   }
 
   revalidatePath("/");
   revalidatePath("/tasks");
+  return { success: true, status: task.status };
 }
 
 export async function updateTaskAction(taskId: string, formData: FormData) {

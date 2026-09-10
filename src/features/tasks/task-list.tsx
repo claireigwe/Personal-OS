@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Check, Pencil, Trash2, X, AlertCircle, RotateCw, Calendar, Clock } from "lucide-react";
+import { useState, useTransition, useEffect } from "react";
+import { Check, Pencil, Trash2, X, AlertCircle, RotateCw, Calendar, Clock, Loader2 } from "lucide-react";
 import { toggleTaskAction, updateTaskAction, deleteTaskAction } from "@/features/tasks/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,10 +30,34 @@ function TaskItem({ task, compact }: { task: TaskItemData; compact?: boolean }) 
   const [editError, setEditError] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  const completed = task.status === "COMPLETED";
-  const isPendingTask = task.status === "PENDING";
+  const [isCompleted, setIsCompleted] = useState(task.status === "COMPLETED");
+  const [isToggling, setIsToggling] = useState(false);
+
+  useEffect(() => {
+    setIsCompleted(task.status === "COMPLETED");
+  }, [task.status]);
+
+  const isPendingTask = !isCompleted;
   const isRolledOver = isPendingTask && task.activeDate && new Date(task.activeDate) < startOfToday();
   const isUpcoming = isPendingTask && task.activeDate && new Date(task.activeDate) > startOfToday();
+
+  const handleToggle = () => {
+    if (isToggling) return;
+    const next = !isCompleted;
+    setIsCompleted(next);
+    setIsToggling(true);
+
+    startTransition(async () => {
+      try {
+        await toggleTaskAction(task.id, next);
+      } catch (err) {
+        console.error("Failed to toggle task:", err);
+        setIsCompleted(!next);
+      } finally {
+        setIsToggling(false);
+      }
+    });
+  };
 
   const handleUpdate = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -187,22 +211,41 @@ function TaskItem({ task, compact }: { task: TaskItemData; compact?: boolean }) 
 
   return (
     <div className="group relative flex items-center gap-3 rounded-2xl border-2 border-border/50 bg-card p-3.5 shadow-sm transition-all hover-lift">
-      <form action={() => toggleTaskAction(task.id, !completed)}>
-        <Button
-          aria-label={completed ? "Undo completion" : "Mark complete"}
-          size="icon"
-          variant={completed ? "secondary" : "outline"}
-          className={cn(
-            "rounded-xl h-10 w-10 shrink-0 transition-transform active:scale-95",
-            completed && "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
-          )}
-        >
-          {completed ? <Check className="h-5 w-5" /> : <div className="h-4 w-4 rounded-full border-2 border-current" />}
-        </Button>
-      </form>
+      <Button
+        type="button"
+        aria-label={isCompleted ? "Undo completion" : "Mark complete"}
+        size="icon"
+        variant={isCompleted ? "secondary" : "outline"}
+        onClick={handleToggle}
+        disabled={isToggling}
+        className={cn(
+          "rounded-xl h-10 w-10 shrink-0 transition-all active:scale-95",
+          isCompleted && "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800",
+          isToggling && "opacity-80 scale-95"
+        )}
+      >
+        {isToggling ? (
+          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+        ) : isCompleted ? (
+          <Check className="h-5 w-5" />
+        ) : (
+          <div className="h-4 w-4 rounded-full border-2 border-current" />
+        )}
+      </Button>
 
-      <div className="min-w-0 flex-1">
-        <p className={cn("font-bold text-sm leading-snug", completed && "text-muted-foreground line-through opacity-70")}>
+      <div
+        className="min-w-0 flex-1 cursor-pointer select-none"
+        onClick={handleToggle}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleToggle();
+          }
+        }}
+      >
+        <p className={cn("font-bold text-sm leading-snug transition-all", isCompleted && "text-muted-foreground line-through opacity-70")}>
           {task.title}
         </p>
         {!compact && task.description ? (
@@ -230,7 +273,10 @@ function TaskItem({ task, compact }: { task: TaskItemData; compact?: boolean }) 
         </div>
       </div>
 
-      <div className="flex items-center gap-1 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+      <div
+        className="flex items-center gap-1 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+        onClick={(e) => e.stopPropagation()}
+      >
         <Button
           type="button"
           size="icon"
